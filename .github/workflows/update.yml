@@ -1,1 +1,32 @@
 
+name: IPTV Otomatik Guncelleyici
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Depoyu Klonla
+        uses: actions/checkout@v4
+
+      - name: Python Kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Kanalları Test Et ve Temizle
+        run: python update_playlist.py
+
+      - name: Yeni Calisan Listeyi Kaydet
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add canli_kanallar.m3u
+          git commit -m "Otomatik Canlı Kanallar Güncellendi [skip ci]" || exit 0
+          git push
