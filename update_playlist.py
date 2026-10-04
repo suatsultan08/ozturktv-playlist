@@ -10,7 +10,7 @@ ctx.verify_mode = ssl.CERT_NONE
 # Bizim kaynaklarımız
 SOURCE_URLS = [
     "https://gist.githubusercontent.com/suatsultan08/002cbfc4fd3524cac8fae3e041641ff9/raw/kanallar.txt",
-    "https://iptv-org.github.io/iptv/countries/tr.m3u"
+    
 ]
 
 OUTPUT_FILE = "canli_kanallar.m3u"
