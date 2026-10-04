@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Depoyu Klonla
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Python Kur
         uses: actions/setup-python@v5
@@ -29,4 +31,5 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git add canli_kanallar.m3u
           git commit -m "Otomatik Canlı Kanallar Güncellendi [skip ci]" || echo "Değişiklik yok"
-          git push
+          git pull --rebase origin main
+          git push origin main
