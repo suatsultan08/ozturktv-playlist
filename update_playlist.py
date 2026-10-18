@@ -31,7 +31,7 @@ def is_link_alive(channel_data):
     return (name, url, False)
 
 def parse_playlist_recursive(source_url, visited=None):
-    """Hem kanallar.txt'yi hem de içindeki alt .m3u linklerini içeri dalıp çözer"""
+    """Hem kanallar.txt'yi hem de içindeki alt .m3u linklerini içeri dalıp çözer (.m3u8 lere dalmaz!)"""
     if visited is None:
         visited = set()
     
@@ -61,13 +61,20 @@ def parse_playlist_recursive(source_url, visited=None):
 
                 # URL satırı yakalandı
                 elif line.startswith("http://") or line.startswith("https://"):
-                    # Eğer bu bir alt M3U listesiyse içine girip kanallarını çek
-                    if ".m3u" in line.lower() or "playlist" in line.lower() or ".txt" in line.lower():
+                    # KRİTİK DÜZELTME: .m3u8 dosyaları alt liste değildir, doğrudan yayındır! İçine dalınmaz.
+                    is_sub_playlist = (
+                        (line.lower().endswith(".m3u") or line.lower().endswith(".txt") or "playlist" in line.lower())
+                        and not line.lower().endswith(".m3u8")
+                    )
+
+                    if is_sub_playlist:
                         print(f"🔗 Alt liste bulundu, içeriğe dalınıyor: {line}")
                         items.extend(parse_playlist_recursive(line, visited))
                         current_extinf = ""
                     elif current_extinf:
-                        items.append((current_extinf, line))
+                        # .ts uzantılı geçici segmentlerin kanal olarak eklenmesini engelle
+                        if not line.lower().endswith(".ts"):
+                            items.append((current_extinf, line))
                         current_extinf = ""
 
                 # 'Kanal Adı | URL' veya 'Liste Adı | M3U_URL' formatı
@@ -76,11 +83,16 @@ def parse_playlist_recursive(source_url, visited=None):
                     title = parts[0].strip()
                     url = parts[1].strip()
                     if url.startswith("http"):
-                        if ".m3u" in url.lower() or "playlist" in url.lower() or ".txt" in url.lower():
+                        is_sub_playlist_pipe = (
+                            (url.lower().endswith(".m3u") or url.lower().endswith(".txt") or "playlist" in url.lower())
+                            and not url.lower().endswith(".m3u8")
+                        )
+                        if is_sub_playlist_pipe:
                             print(f"🔗 Alt liste linki bulundu: {title} -> {url}")
                             items.extend(parse_playlist_recursive(url, visited))
                         else:
-                            items.append((f'#EXTINF:-1 group-title="Genel",{title}', url))
+                            if not url.lower().endswith(".ts"):
+                                items.append((f'#EXTINF:-1 group-title="Genel",{title}', url))
     except Exception as e:
         print(f"Uyarı: {source_url} ayrıştırılamadı -> {e}")
     return items
